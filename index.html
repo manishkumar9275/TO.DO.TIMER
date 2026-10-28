@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TaskClock – Deadline Tracker</title>
+<style>
+:root{color-scheme:dark;--bg:#0f1523;--sf:#182033;--tx:#e8ecf5;--mu:#98a4bd;--bd:#2a3550;--pr:#6b8cff;--prt:#0f1523;--ok:#4cc9a0;--okb:#14352c;--wr:#f2b45a;--wrb:#3a2c14;--er:#ff7b80;--erb:#3d1b1e;--ib:#1d2a4d;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root[data-theme="forcedark"]{color-scheme:dark;--bg:#0f1523;--sf:#182033;--tx:#e8ecf5;--mu:#98a4bd;--bd:#2a3550;--pr:#6b8cff;--prt:#0f1523;--ok:#4cc9a0;--okb:#14352c;--wr:#f2b45a;--wrb:#3a2c14;--er:#ff7b80;--erb:#3d1b1e;--ib:#1d2a4d}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1523;--sf:#182033;--tx:#e8ecf5;--mu:#98a4bd;--bd:#2a3550;--pr:#6b8cff;--prt:#0f1523;--ok:#4cc9a0;--okb:#14352c;--wr:#f2b45a;--wrb:#3a2c14;--er:#ff7b80;--erb:#3d1b1e;--ib:#1d2a4d}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:#0f1523;background:var(--bg);color:#e8ecf5;color:var(--tx);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+h1{margin:0;font-size:22px;letter-spacing:-.2px}h1 small{display:block;font-size:13px;font-weight:400;color:var(--mu)}
+.clock{text-align:right;font-variant-numeric:tabular-nums}.clock b{font-size:22px;display:block}.clock span{font-size:13px;color:var(--mu)}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:16px}
+form{display:grid;grid-template-columns:2fr 1.2fr 1fr auto;gap:10px;align-items:end}
+label{font-size:12.5px;color:var(--mu);display:block;margin-bottom:4px;font-weight:600}
+input,select{width:100%;height:44px;padding:0 10px;border:1px solid var(--bd);border-radius:7px;background:var(--bg);color:var(--tx);font:inherit;line-height:1.2}
+label{line-height:18px;height:18px}
+form button{height:44px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--pr);outline-offset:1px}
+button{font:inherit;cursor:pointer;border-radius:7px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);padding:9px 14px}
+.pri{background:var(--pr);color:var(--prt);border-color:var(--pr);font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+.stat{padding:12px 14px}.stat b{font-size:24px;display:block;line-height:1.2}.stat span{font-size:12.5px;color:var(--mu)}
+.bar{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap;margin:6px 0 10px}
+.tabs button{margin-right:6px}.tabs button[aria-pressed=true]{background:var(--ib);border-color:var(--pr);color:var(--pr);font-weight:600}
+.task{display:grid;grid-template-columns:1fr auto;gap:10px;padding:14px;border-left:4px solid var(--pr);margin-bottom:10px}
+.task.soon{border-left-color:var(--wr)}.task.over{border-left-color:var(--er)}.task.done{border-left-color:var(--ok)}
+.task h3{margin:0 0 4px;font-size:16px}.task.done h3{text-decoration:line-through;color:var(--mu)}
+.meta{font-size:13px;color:var(--mu)}.meta div{margin-top:2px}
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--ib);color:var(--pr);margin-left:6px;vertical-align:2px}
+.soon .badge{background:var(--wrb);color:var(--wr)}.over .badge{background:var(--erb);color:var(--er)}.done .badge{background:var(--okb);color:var(--ok)}
+.side{text-align:right;display:flex;flex-direction:column;gap:6px;align-items:flex-end;justify-content:center}
+.cd{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}.soon .cd{color:var(--wr)}.over .cd{color:var(--er)}
+.acts{display:flex;gap:6px}.ok{background:var(--ok);border-color:var(--ok);color:var(--prt);font-weight:600}
+.empty{text-align:center;color:var(--mu);padding:34px 10px}
+#alarm{position:fixed;left:0;right:0;top:0;z-index:20;background:var(--er);color:#fff;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px;display:none;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;font-weight:600}
+#alarm.on{display:flex}#alarm button{background:#fff;color:#c0262d;border:0;font-weight:700}
+.note{font-size:12.5px;color:var(--mu);margin-top:8px}
+@media(max-width:700px){form{grid-template-columns:1fr 1fr}form .t{grid-column:1/-1}form button{grid-column:1/-1}.stats{grid-template-columns:1fr 1fr}.task{grid-template-columns:1fr}.side{align-items:flex-start;text-align:left}}
+@media(prefers-reduced-motion:no-preference){#alarm.on{animation:pl 1s infinite}@keyframes pl{50%{filter:brightness(.8)}}}
+</style>
+</head>
+<body>
+<div id="alarm" role="alert"><span id="amsg"></span><button id="stop">Stop alarm</button></div>
+<div class="wrap">
+<header>
+<h1>TaskClock<small>Deadline tracker with pre-deadline alarm</small></h1>
+<div class="clock"><b id="ct">--:--:--</b><span id="cd">&nbsp;</span></div>
+</header>
+
+<form class="card" id="f">
+<div class="t"><label for="title">Task</label><input id="title" required maxlength="100" placeholder="e.g. Submit project report"></div>
+<div><label for="due">Deadline</label><input id="due" type="datetime-local" required></div>
+<div><label for="pri">Priority</label><select id="pri"><option>High</option><option selected>Medium</option><option>Low</option></select></div>
+<button class="pri" type="submit">Add task</button>
+</form>
+<p class="note">A 15-second alarm rings 10 minutes before each deadline. Keep this tab open and your sound on. <button id="test" type="button" style="padding:3px 9px;font-size:12px">Test sound</button></p>
+
+<div class="stats">
+<div class="card stat"><b id="s1">0</b><span>Total tasks</span></div>
+<div class="card stat"><b id="s2">0</b><span>Pending</span></div>
+<div class="card stat"><b id="s3">0</b><span>Completed</span></div>
+<div class="card stat"><b id="s4">0</b><span>Overdue</span></div>
+</div>
+
+<div class="bar">
+<div class="tabs" id="tabs"><button data-f="all" aria-pressed="true">All</button><button data-f="pending" aria-pressed="false">Pending</button><button data-f="done" aria-pressed="false">Completed</button></div>
+<button id="clr">Clear completed</button>
+</div>
+<div id="list"></div>
+</div>
+
+<script>
+(function(){
+var KEY="taskclock.v1",tasks=[],filter="all",ctx=null,stopT=null,osc=null;
+try{tasks=JSON.parse(localStorage.getItem(KEY)||"[]")}catch(e){tasks=[]}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(tasks))}catch(e){}}
+var $=function(i){return document.getElementById(i)};
+function p(n){return String(n).padStart(2,"0")}
+function fd(t){return new Date(t).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})}
+function ft(t){return new Date(t).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}
+function dur(ms){ms=Math.abs(ms);var s=Math.floor(ms/1000),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);s%=60;
+return (d?d+"d ":"")+p(h)+":"+p(m)+":"+p(s)}
+function human(ms){ms=Math.abs(ms);var m=Math.round(ms/60000),h=Math.floor(m/60),d=Math.floor(h/24);
+return d?d+"d "+h%24+"h":h?h+"h "+m%60+"m":m+" min"}
+function esc(s){return s.replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+function unlock(){try{if(!ctx)ctx=new (window.AudioContext||window.webkitAudioContext)();if(ctx.state==="suspended")ctx.resume()}catch(e){}}
+function startAlarm(msg){
+ unlock();stopAlarm(true);
+ $("amsg").textContent=msg;$("alarm").classList.add("on");
+ if(ctx){var g=ctx.createGain();g.connect(ctx.destination);osc=[];var t0=ctx.currentTime;
+  for(var i=0;i<30;i++){var o=ctx.createOscillator();o.type="square";o.frequency.value=i%2?880:660;
+   o.connect(g);g.gain.setValueAtTime(.25,t0);o.start(t0+i*.5);o.stop(t0+i*.5+.4);osc.push(o)}
+  osc.g=g}
+ if(navigator.vibrate)try{navigator.vibrate([400,200,400,200,400])}catch(e){}
+ stopT=setTimeout(stopAlarm,15000);
+}
+function stopAlarm(quiet){
+ clearTimeout(stopT);$("alarm").classList.remove("on");
+ if(osc){osc.forEach(function(o){try{o.stop()}catch(e){}});try{osc.g.disconnect()}catch(e){}osc=null}
+}
+$("stop").onclick=function(){stopAlarm()};
+$("test").onclick=function(){startAlarm("Test alarm – this is how reminders sound (15 sec)")};
+
+function status(t,now){
+ if(t.doneAt)return"done";
+ var left=t.due-now;
+ if(left<0)return"over";
+ if(left<=600000)return"soon";
+ return"up";
+}
+function render(){
+ var now=Date.now(),list=tasks.slice().sort(function(a,b){return (!!a.doneAt-!!b.doneAt)||(a.doneAt?b.doneAt-a.doneAt:a.due-b.due)});
+ if(filter==="pending")list=list.filter(function(t){return!t.doneAt});
+ if(filter==="done")list=list.filter(function(t){return t.doneAt});
+ var h="";
+ list.forEach(function(t){
+  var s=status(t,now),left=t.due-now,lab,side;
+  if(s==="done"){var d=t.doneAt-t.due;
+   lab=d<=0?"Completed on time":"Completed late";
+   side='<div class="cd">'+(d<=0?human(d)+" early":human(d)+" late")+'</div>'}
+  else if(s==="over"){lab="Overdue";side='<div class="cd">-'+dur(left)+'</div>'}
+  else{lab=s==="soon"?"Due soon":"Upcoming";side='<div class="cd">'+dur(left)+'</div>'}
+  h+='<div class="card task '+s+'"><div><h3>'+esc(t.title)+'<span class="badge">'+lab+'</span></h3><div class="meta">'+
+   '<div>Priority: '+t.pri+'</div><div>Deadline: '+fd(t.due)+', '+ft(t.due)+'</div>'+
+   (t.doneAt?'<div>Actual completion: <b>'+fd(t.doneAt)+', '+ft(t.doneAt)+'</b></div>':'<div>Created: '+fd(t.created)+', '+ft(t.created)+'</div>')+
+   '</div></div><div class="side">'+side+'<div class="acts">'+
+   (t.doneAt?'':'<button class="ok" data-d="'+t.id+'">Mark done</button>')+
+   '<button data-x="'+t.id+'" aria-label="Delete task">Delete</button></div></div></div>';
+ });
+ $("list").innerHTML=h||'<div class="card empty">No tasks here yet. Add your first task above.</div>';
+ var pend=tasks.filter(function(t){return!t.doneAt});
+ $("s1").textContent=tasks.length;$("s2").textContent=pend.length;
+ $("s3").textContent=tasks.length-pend.length;
+ $("s4").textContent=pend.filter(function(t){return t.due<now}).length;
+}
+function tick(){
+ var n=new Date();
+ $("ct").textContent=ft(n);
+ $("cd").textContent=n.toLocaleDateString("en-GB",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+ var now=n.getTime(),changed=false;
+ tasks.forEach(function(t){
+  if(!t.doneAt&&!t.alarmed&&now>=t.due-600000&&now<t.due+60000){
+   t.alarmed=true;changed=true;
+   var m=Math.max(0,Math.ceil((t.due-now)/60000));
+   startAlarm("Reminder: \""+t.title+"\" is due in "+(m>0?m+" min":"less than a minute"));
+  }
+ });
+ if(changed)save();
+ render();
+}
+$("f").onsubmit=function(e){
+ e.preventDefault();unlock();
+ var due=new Date($("due").value).getTime();
+ if(!due)return;
+ tasks.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title:$("title").value.trim(),due:due,pri:$("pri").value,created:Date.now(),doneAt:null,alarmed:false});
+ save();$("title").value="";tick();
+};
+$("list").onclick=function(e){
+ var b=e.target.closest("button");if(!b)return;
+ if(b.dataset.d){tasks.forEach(function(t){if(t.id===b.dataset.d){t.doneAt=Date.now()}});stopAlarm()}
+ if(b.dataset.x){tasks=tasks.filter(function(t){return t.id!==b.dataset.x})}
+ save();render();
+};
+$("tabs").onclick=function(e){var b=e.target.closest("button");if(!b)return;filter=b.dataset.f;
+ Array.prototype.forEach.call($("tabs").children,function(x){x.setAttribute("aria-pressed",x===b)});render()};
+$("clr").onclick=function(){tasks=tasks.filter(function(t){return!t.doneAt});save();render()};
+document.addEventListener("click",unlock,{once:true});
+var d=new Date(Date.now()+3600000);$("due").value=d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"T"+p(d.getHours())+":"+p(d.getMinutes());
+tick();setInterval(tick,1000);
+})();
+</script>
+</body>
+</html>
